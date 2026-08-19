@@ -13,8 +13,6 @@ import pytest
 from grove import repo
 from grove.errors import NotAGitRepository
 
-pytestmark = pytest.mark.xfail(raises=NotImplementedError, strict=True, reason="not implemented")
-
 
 def test_discover_finds_the_enclosing_repository(scratch_repo: Path) -> None:
     found = repo.discover_repository(scratch_repo)

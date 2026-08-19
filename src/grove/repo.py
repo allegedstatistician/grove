@@ -10,6 +10,9 @@ from pathlib import Path
 
 import pygit2
 
+from grove.errors import RepositoryIsBare, NotAGitRepository
+
+
 
 def discover_repository(start: Path) -> Path:
     """Walk upward from `start` and return the path of the enclosing .git dir.
@@ -19,7 +22,10 @@ def discover_repository(start: Path) -> Path:
 
     Exercises: pathlib, exception chaining, `pygit2.discover_repository`.
     """
-    raise NotImplementedError
+    path = pygit2.discover_repository(start)
+    if path is None:
+        raise NotAGitRepository(f"No repository found in {start}")
+    return Path(path)
 
 
 def open_repository(start: Path) -> pygit2.Repository:
@@ -29,12 +35,21 @@ def open_repository(start: Path) -> pygit2.Repository:
         NotAGitRepository: if no repository encloses `start`.
         RepositoryIsBare: if the repository has no working tree.
     """
-    raise NotImplementedError
+    if pygit2.discover_repository(start) is None:
+        raise NotAGitRepository(f"No repository found in {start}")
+    repo = pygit2.Repository(start)
+    if repo.is_bare:
+        raise RepositoryIsBare(f"Repository at {start} is bare")
+    return repo
 
 
 def repository_root(repo: pygit2.Repository) -> Path:
     """Return the working-tree root (the directory containing .git)."""
-    raise NotImplementedError
+    work_directory = repo.workdir
+    if work_directory is not None:
+        return Path(work_directory)
+    raise RepositoryIsBare("Repository has no working directory")
+
 
 
 def is_dirty(repo: pygit2.Repository) -> bool:
@@ -43,4 +58,8 @@ def is_dirty(repo: pygit2.Repository) -> bool:
     Exercises: `Repository.status()`, the status-flag bitmask, and deciding
     whether untracked files count as dirty for grove's purposes.
     """
-    raise NotImplementedError
+
+    for filepath, flags in repo.status().items():
+        if flags != pygit2.enums.FileStatus.CURRENT:
+            return True
+    return False

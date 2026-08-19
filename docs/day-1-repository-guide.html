@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A practical implementation guide for Grove's repository discovery module.">
+  <title>Grove · Day 1 Repository Guide</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #16211c;
+      --muted: #66736b;
+      --paper: #fbfaf5;
+      --panel: #ffffff;
+      --line: #dde2dc;
+      --green: #176b4d;
+      --green-dark: #0c4b35;
+      --green-soft: #e8f4ed;
+      --gold: #e6a93d;
+      --code: #14251e;
+      --code-ink: #e6f3eb;
+      --shadow: 0 18px 48px rgba(31, 52, 42, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 86% -8%, rgba(230, 169, 61, .16), transparent 30rem),
+        var(--paper);
+      color: var(--ink);
+      font: 16px/1.7 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    a { color: var(--green); text-underline-offset: .18em; }
+    a:hover { color: var(--green-dark); }
+
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    :focus-visible {
+      outline: 3px solid rgba(230, 169, 61, .7);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    .topbar {
+      position: sticky;
+      z-index: 20;
+      top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 60px;
+      padding: 0 28px;
+      border-bottom: 1px solid rgba(221, 226, 220, .85);
+      background: rgba(251, 250, 245, .9);
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: flex;
+      gap: 11px;
+      align-items: center;
+      color: var(--ink);
+      font-weight: 750;
+      letter-spacing: -.02em;
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 31px;
+      height: 31px;
+      place-items: center;
+      border-radius: 9px 9px 9px 3px;
+      background: var(--green);
+      color: white;
+      font-family: Georgia, serif;
+      font-size: 19px;
+    }
+
+    .top-links { display: flex; gap: 18px; }
+    .top-links a { color: var(--muted); font-size: 14px; text-decoration: none; }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 245px minmax(0, 820px);
+      gap: 48px;
+      width: min(1160px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 54px 0 100px;
+    }
+
+    aside {
+      position: sticky;
+      top: 94px;
+      align-self: start;
+      max-height: calc(100vh - 120px);
+      overflow: auto;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .side-title { margin: 0 0 16px; font-size: 14px; }
+    .side-nav { display: grid; gap: 4px; }
+    .side-nav a {
+      padding: 7px 10px;
+      border-left: 2px solid transparent;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+      text-decoration: none;
+    }
+    .side-nav a:hover {
+      border-left-color: var(--gold);
+      color: var(--ink);
+      background: rgba(255,255,255,.65);
+    }
+
+    main { min-width: 0; }
+
+    .hero {
+      padding: 42px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      letter-spacing: -.025em;
+      line-height: 1.18;
+    }
+
+    h1 { max-width: 700px; margin-bottom: 18px; font-size: clamp(40px, 7vw, 67px); }
+    h2 { margin-bottom: 18px; font-size: 34px; scroll-margin-top: 92px; }
+    h3 { margin: 30px 0 10px; font-size: 22px; scroll-margin-top: 92px; }
+
+    .lead { max-width: 670px; margin: 0; color: var(--muted); font-size: 19px; }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .pill {
+      padding: 6px 11px;
+      border: 1px solid #cfe0d6;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--green-dark);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    section { padding: 64px 0 8px; }
+    section + section { border-top: 1px solid var(--line); }
+
+    .outcome-grid, .task-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.72);
+    }
+    .card strong { display: block; margin-bottom: 3px; }
+    .card p { margin: 0; color: var(--muted); }
+
+    .task-number {
+      display: inline-grid;
+      width: 29px;
+      height: 29px;
+      margin-bottom: 13px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--green);
+      color: white;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .api-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 18px 0;
+    }
+    .api-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 11px;
+      border: 1px solid #cbd8d0;
+      border-radius: 8px;
+      background: white;
+      color: var(--green-dark);
+      font: 600 13px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+      text-decoration: none;
+    }
+    .api-link:hover { border-color: var(--green); box-shadow: 0 5px 14px rgba(23,107,77,.08); }
+    .api-link span { color: var(--gold); font-family: sans-serif; }
+
+    .callout {
+      margin: 22px 0;
+      padding: 18px 20px;
+      border-left: 4px solid var(--gold);
+      border-radius: 0 10px 10px 0;
+      background: #fff8e9;
+    }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .callout p { margin: 0; }
+
+    pre {
+      position: relative;
+      margin: 18px 0;
+      padding: 20px 22px;
+      overflow-x: auto;
+      border-radius: 13px;
+      background: var(--code);
+      color: var(--code-ink);
+      font-size: 14px;
+      line-height: 1.65;
+      tab-size: 4;
+    }
+    :not(pre) > code {
+      padding: .14em .38em;
+      border-radius: 5px;
+      background: #edf0ed;
+      color: #294537;
+      font-size: .88em;
+    }
+
+    .diagram {
+      padding: 22px;
+      border: 1px dashed #afc2b7;
+      border-radius: 13px;
+      background: #f5faf7;
+      color: var(--green-dark);
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      margin: 20px 0;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td { padding: 13px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #f0f4f1; color: var(--green-dark); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+
+    ul, ol { padding-left: 22px; }
+    li + li { margin-top: 7px; }
+
+    .checklist { padding: 0; list-style: none; }
+    .checklist li {
+      position: relative;
+      padding: 11px 14px 11px 42px;
+      border-bottom: 1px solid var(--line);
+    }
+    .checklist li::before {
+      position: absolute;
+      top: 13px;
+      left: 13px;
+      width: 17px;
+      height: 17px;
+      border: 2px solid #9cad9f;
+      border-radius: 5px;
+      content: "";
+    }
+
+    .footer {
+      margin-top: 72px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 850px) {
+      .shell { display: block; width: min(100% - 32px, 820px); padding-top: 28px; }
+      aside { display: none; }
+      .hero { padding: 28px; }
+      .outcome-grid, .task-grid { grid-template-columns: 1fr; }
+      .topbar { padding: 0 16px; }
+      .top-links a:first-child { display: none; }
+      section { padding-top: 48px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top"><span class="brand-mark">g</span> grove field notes</a>
+    <nav class="top-links" aria-label="Page links">
+      <a href="#workflow">Workflow</a>
+      <a href="#references">API reference</a>
+    </nav>
+  </header>
+
+  <div class="shell" id="top">
+    <aside aria-label="On this page">
+      <p class="eyebrow">Day 1</p>
+      <p class="side-title"><strong>Repository discovery</strong></p>
+      <nav class="side-nav">
+        <a href="#outcome">Outcome</a>
+        <a href="#before-coding">Names, imports &amp; pytest</a>
+        <a href="#paths">Two kinds of paths</a>
+        <a href="#discover">1. Discover a repository</a>
+        <a href="#open">2. Open a repository</a>
+        <a href="#root">3. Find the worktree root</a>
+        <a href="#dirty">4. Detect dirty state</a>
+        <a href="#workflow">Implementation loop</a>
+        <a href="#checklist">Review checklist</a>
+        <a href="#references">Primary references</a>
+      </nav>
+    </aside>
+
+    <main>
+      <header class="hero">
+        <p class="eyebrow">Grove implementation guide · Day 1</p>
+        <h1>Find the repository. Keep Git’s paths straight.</h1>
+        <p class="lead">A practical guide to implementing <code>repo.py</code> while learning repository discovery, nullable library results, worktrees, status flags, and domain errors.</p>
+        <div class="hero-meta">
+          <span class="pill">4 functions</span>
+          <span class="pill">6 existing tests</span>
+          <span class="pill">pygit2 1.20 installed</span>
+          <span class="pill">No solution bodies</span>
+        </div>
+      </header>
+
+      <section id="outcome">
+        <p class="eyebrow">Destination</p>
+        <h2>What Day 1 should accomplish</h2>
+        <div class="outcome-grid">
+          <div class="card"><strong>Discover</strong><p>Walk upward from any directory inside a repository and locate its Git directory.</p></div>
+          <div class="card"><strong>Translate errors</strong><p>Turn library-level absence into Grove’s precise <code>NotAGitRepository</code> error.</p></div>
+          <div class="card"><strong>Open safely</strong><p>Create a pygit2 repository and reject bare repositories before they reach worktree code.</p></div>
+          <div class="card"><strong>Inspect state</strong><p>Return the actual working-tree root and identify changes across HEAD, index, and disk.</p></div>
+        </div>
+        <h3>Dependency order</h3>
+        <pre aria-label="Function dependency diagram">discover_repository(start)
+        │
+        ▼
+open_repository(start) ──── reject bare repositories
+        │
+        ├── repository_root(repo)
+        └── is_dirty(repo)</pre>
+        <p>Implement in this order. Each later function builds on a concept established by the one before it.</p>
+      </section>
+
+      <section id="before-coding">
+        <p class="eyebrow">Before you implement</p>
+        <h2>Resolve names, imports, and test signals</h2>
+        <h3>Existing names still need local imports</h3>
+        <p>The scaffold omits imports that are only needed inside unfinished function bodies. Both Day 1 errors already exist in <code>src/grove/errors.py</code>:</p>
+        <div class="task-grid">
+          <div class="card"><strong><code>NotAGitRepository</code></strong><p>Import and raise it when discovery returns <code>None</code>. Do not define it again.</p></div>
+          <div class="card"><strong><code>RepositoryIsBare</code></strong><p>Import and raise it when an opened repository has no working tree. Do not define it again.</p></div>
+        </div>
+        <div class="callout"><strong>Imports are module-local.</strong><p><code>tests/test_repo.py</code> imports <code>NotAGitRepository</code> so the test can refer to it. That does not make the name available inside <code>grove.repo</code>; the implementation module needs its own import.</p></div>
+        <h3>Repeat this scan for every module</h3>
+        <ol>
+          <li>Read the function signature and its <code>Raises</code> section.</li>
+          <li>Search the repository for each Grove-specific name.</li>
+          <li>Decide whether it already exists and needs an import, or is genuinely yours to define.</li>
+          <li>Read the tests that exercise the function.</li>
+          <li>Note documented promises that currently lack tests.</li>
+        </ol>
+        <h3>Interpret focused pytest output</h3>
+        <table>
+          <thead><tr><th>Result</th><th>Meaning while the xfail marker exists</th></tr></thead>
+          <tbody>
+            <tr><td><code>XFAIL (not implemented)</code></td><td>The test reached <code>NotImplementedError</code>. Its assertions did not pass.</td></tr>
+            <tr><td>strict <code>XPASS</code></td><td>The test stopped raising <code>NotImplementedError</code>. This is progress, though strict mode exits nonzero.</td></tr>
+            <tr><td><code>FAILED</code></td><td>A different exception or assertion failed. Read the innermost frame in Grove source.</td></tr>
+          </tbody>
+        </table>
+        <div class="callout"><strong><code>[XPASS(strict)]</code> under “FAILURES” is still progress.</strong><p>It means the test body completed successfully. The reported failure is strict mode objecting that a test marked as an expected failure unexpectedly passed; it is not an assertion failure in your function.</p></div>
+        <p>For an ordinary red/green loop while implementing one function, disable the expected-failure wrapper temporarily:</p>
+        <pre>uv run pytest tests/test_repo.py -k discover --runxfail -v</pre>
+        <p>Now <code>PASSED</code> means the selected behavior works, and <code>FAILED</code> exposes the actual traceback. Remove the module-level marker only after every repository function is complete.</p>
+      </section>
+
+      <section id="paths">
+        <p class="eyebrow">Mental model</p>
+        <h2>Git directory ≠ working-tree root</h2>
+        <div class="diagram"><code>/project/</code> — files you edit &nbsp;&nbsp;·&nbsp;&nbsp; <code>/project/.git/</code> — Git’s administrative data</div>
+        <p>A normal repository exposes both locations. pygit2 calls the metadata directory <code>repo.path</code> and the checkout directory <code>repo.workdir</code>.</p>
+        <table>
+          <thead><tr><th>Question</th><th>Correct source</th><th>Scratch fixture result</th></tr></thead>
+          <tbody>
+            <tr><td>Where is Git’s repository data?</td><td><code>repo.path</code></td><td><code>scratch/.git/</code></td></tr>
+            <tr><td>Where are the checked-out files?</td><td><code>repo.workdir</code></td><td><code>scratch/</code></td></tr>
+          </tbody>
+        </table>
+        <div class="callout"><strong>Do not derive one path from the other.</strong><p>Linked worktrees store their administrative directory elsewhere. Ask pygit2 for <code>workdir</code> instead of assuming <code>repo.path.parent</code>.</p></div>
+        <div class="api-links">
+          <a class="api-link" href="https://www.pygit2.org/repository.html#pygit2.Repository.path" target="_blank" rel="noreferrer">Repository.path <span>↗</span></a>
+          <a class="api-link" href="https://www.pygit2.org/repository.html#pygit2.Repository.workdir" target="_blank" rel="noreferrer">Repository.workdir <span>↗</span></a>
+          <a class="api-link" href="https://git-scm.com/docs/gitrepository-layout" target="_blank" rel="noreferrer">Git repository layout <span>↗</span></a>
+        </div>
+      </section>
+
+      <section id="discover">
+        <span class="task-number">1</span>
+        <h2><code>discover_repository</code></h2>
+        <p><strong>Contract:</strong> given a <code>Path</code>, search it and its parents. Return the discovered Git directory as a <code>Path</code>. If discovery fails, raise <code>NotAGitRepository</code> with the starting path in the message.</p>
+        <div class="callout"><strong>Required existing name.</strong><p>Import <code>NotAGitRepository</code> from <code>grove.errors</code>. It is already part of the scaffold; do not create another class with the same name.</p></div>
+        <div class="api-links">
+          <a class="api-link" href="https://www.pygit2.org/repository.html#pygit2.discover_repository" target="_blank" rel="noreferrer">pygit2.discover_repository <span>↗</span></a>
+          <a class="api-link" href="https://docs.python.org/3.12/library/pathlib.html#pathlib.Path" target="_blank" rel="noreferrer">pathlib.Path <span>↗</span></a>
+        </div>
+        <h3>The library’s important behavior</h3>
+        <p>Discovery failure returns <code>None</code>; it does not raise. The installed type can be read as:</p>
+        <pre>def discover_repository(
+    path: str | Path, ...
+) -&gt; str | None: ...</pre>
+        <p>A generic narrowing pattern looks like this:</p>
+        <pre>found = pygit2.discover_repository(candidate)
+if found is None:
+    raise LookupError(candidate)</pre>
+        <div class="callout"><strong>Translate, don’t copy.</strong><p>The example uses <code>LookupError</code> only to show narrowing. Grove already has the more meaningful <code>NotAGitRepository</code>.</p></div>
+        <h3>Concepts to learn</h3>
+        <ul>
+          <li><strong>Optional narrowing:</strong> after <code>is None</code>, mypy can prove the other branch contains a string.</li>
+          <li><strong>Boundary conversion:</strong> pygit2 returns a string; Grove’s public interface promises a <code>Path</code>.</li>
+          <li><strong>Domain errors:</strong> translate a library convention into vocabulary meaningful to your application.</li>
+        </ul>
+        <h3>Scope decisions</h3>
+        <ul>
+          <li>Keep <code>across_fs=False</code>; Grove does not need cross-filesystem discovery.</li>
+          <li>Treat <code>start</code> as an existing directory for now. Do not invent nonexistent-path behavior without a test.</li>
+          <li>Let <code>Path</code> normalize a trailing separator. Do not trim path strings manually.</li>
+          <li>When the API returns <code>None</code>, there is no caught exception to chain.</li>
+        </ul>
+        <h3>Focused check</h3>
+        <pre>uv run pytest tests/test_repo.py -k discover -v</pre>
+        <p>While the module marker remains, successful assertions appear as strict XPASS results. That is progress.</p>
+      </section>
+
+      <section id="open">
+        <span class="task-number">2</span>
+        <h2><code>open_repository</code></h2>
+        <p><strong>Contract:</strong> reuse discovery, construct a <code>pygit2.Repository</code>, and reject a repository that has no working tree.</p>
+        <div class="callout"><strong>Reuse both existing errors.</strong><p>Import <code>NotAGitRepository</code> and <code>RepositoryIsBare</code> from <code>grove.errors</code>. Let <code>discover_repository</code> own the first error so this function does not duplicate discovery logic.</p></div>
+        <div class="api-links">
+          <a class="api-link" href="https://www.pygit2.org/repository.html#pygit2.Repository" target="_blank" rel="noreferrer">pygit2.Repository <span>↗</span></a>
+          <a class="api-link" href="https://www.pygit2.org/repository.html#pygit2.Repository.is_bare" target="_blank" rel="noreferrer">Repository.is_bare <span>↗</span></a>
+          <a class="api-link" href="https://docs.python.org/3.12/tutorial/errors.html#exception-chaining" target="_blank" rel="noreferrer">Exception chaining <span>↗</span></a>
+        </div>
+        <p>The constructor relationship, stripped of Grove’s validation, is:</p>
+        <pre>git_dir = pygit2.discover_repository(candidate)
+opened = pygit2.Repository(git_dir)</pre>
+        <p>Your actual function must narrow the nullable discovery result first. Reusing Task 1 keeps the <code>NotAGitRepository</code> behavior in one place.</p>
+        <h3>Bare repository rule</h3>
+        <p>Check the boolean <code>is_bare</code> property. Do not infer bareness from a directory name; a bare repository is not required to end in <code>.git</code>.</p>
+        <div class="callout"><strong>Catch narrowly.</strong><p>Do not use <code>except Exception</code>. If a specific pygit2 exception has an accurate Grove equivalent, translate it with <code>raise ... from err</code>. Otherwise let the unexpected failure remain visible.</p></div>
+        <h3>Test gap worth filling</h3>
+        <p>The docstring promises <code>RepositoryIsBare</code>, but the scaffold does not test it. Add one temporary bare repository under pytest’s <code>tmp_path</code> and assert the named domain error.</p>
+      </section>
+
+      <section id="root">
+        <span class="task-number">3</span>
+        <h2><code>repository_root</code></h2>
+        <p><strong>Contract:</strong> return the directory containing checked-out files, not the metadata directory.</p>
+        <div class="api-links">
+          <a class="api-link" href="https://www.pygit2.org/repository.html#pygit2.Repository.workdir" target="_blank" rel="noreferrer">Repository.workdir <span>↗</span></a>
+          <a class="api-link" href="https://docs.python.org/3.12/library/pathlib.html#pathlib.Path" target="_blank" rel="noreferrer">pathlib.Path <span>↗</span></a>
+        </div>
+        <p><code>workdir</code> is typed as <code>str | None</code>. Normal repositories return a normalized path. Bare repositories return <code>None</code>.</p>
+        <div class="callout"><strong>pygit2 1.20 has conflicting type information.</strong><p>The lower-level stub and runtime documentation allow <code>None</code>, but the public <code>BaseRepository</code> class annotates <code>workdir</code> as <code>str</code>. Some editors therefore claim that <code>workdir is not None</code> is always true. Check the separately typed <code>repo.is_bare</code> boolean before reading <code>workdir</code>; do not hide the mismatch with <code># type: ignore</code> or <code>cast()</code>.</p></div>
+        <pre>value = object_with_optional_path.workdir
+if value is None:
+    raise RuntimeError("no working directory")</pre>
+        <p>The example demonstrates narrowing only. Grove should use <code>RepositoryIsBare</code>, not a generic runtime error.</p>
+        <div class="callout"><strong>Do not use <code>assert</code>.</strong><p>A bare repository is a possible runtime input, even if <code>open_repository</code> normally filters it out. It deserves a domain error that is not removed by optimized Python execution.</p></div>
+        <h3>Focused check</h3>
+        <pre>uv run pytest tests/test_repo.py -k repository_root -v</pre>
+      </section>
+
+      <section id="dirty">
+        <span class="task-number">4</span>
+        <h2><code>is_dirty</code></h2>
+        <p><strong>Contract:</strong> report whether the index or working tree differs from HEAD under Grove’s safety policy.</p>
+        <div class="api-links">
+          <a class="api-link" href="https://www.pygit2.org/index_file.html#pygit2.Repository.status" target="_blank" rel="noreferrer">Repository.status() <span>↗</span></a>
+          <a class="api-link" href="https://www.pygit2.org/enums.html#pygit2.enums.FileStatus" target="_blank" rel="noreferrer">FileStatus enum <span>↗</span></a>
+          <a class="api-link" href="https://docs.python.org/3.12/library/functions.html#any" target="_blank" rel="noreferrer">Python any() <span>↗</span></a>
+        </div>
+        <h3>Three states, two comparisons</h3>
+        <pre>HEAD tree  &lt;──── INDEX_* flags ────&gt;  index
+index      &lt;────── WT_* flags ────&gt;  working tree</pre>
+        <table>
+          <thead><tr><th>Situation</th><th>Comparison</th><th>Representative flag</th></tr></thead>
+          <tbody>
+            <tr><td>A new file was staged</td><td>index differs from HEAD</td><td><code>INDEX_NEW</code></td></tr>
+            <tr><td>A tracked file was edited</td><td>worktree differs from index</td><td><code>WT_MODIFIED</code></td></tr>
+            <tr><td>A tracked file was deleted</td><td>worktree/index records deletion</td><td><code>WT_DELETED</code> or <code>INDEX_DELETED</code></td></tr>
+            <tr><td>A new file is untracked</td><td>worktree path is absent from index</td><td><code>WT_NEW</code></td></tr>
+          </tbody>
+        </table>
+        <p>Status flags are a bitmask: one path may have multiple flags simultaneously. Do not assume a value always equals exactly one nonzero member.</p>
+        <h3>Read the dictionary in the correct direction</h3>
+        <pre>key: repository-relative file path (str)
+value: one FileStatus flag or a combination of FileStatus flags</pre>
+        <p>For example, one edited file and one new file may produce:</p>
+        <pre>{
+    "README.md": FileStatus.WT_MODIFIED,
+    "notes.txt": FileStatus.WT_NEW,
+}</pre>
+        <div class="callout"><strong><code>FileStatus.CURRENT</code> means “no change” for one path.</strong><p>It is the zero-valued flag, not a collection of the repository’s current enum values. Clean paths are normally absent from <code>status()</code>, so a clean repository generally produces an empty dictionary.</p></div>
+        <p>A path can have combined index and worktree flags. Use bitwise <code>&amp;</code> to ask whether one member is present:</p>
+        <pre>combined = FileStatus.INDEX_MODIFIED | FileStatus.WT_MODIFIED
+bool(combined &amp; FileStatus.WT_MODIFIED)  # True</pre>
+        <p>If Grove’s policy is “every change returned by the default status call is dirty,” you do not need to list every individual flag. Reason from whether the mapping contains any changed entry.</p>
+        <p>The documentation’s inspection shape is:</p>
+        <pre>for filepath, flags in repo.status().items():
+    if flags != FileStatus.CURRENT:
+        print(filepath)</pre>
+        <p>Grove needs a boolean, not printed paths. Consider what an empty status mapping means and whether at least one changed entry is enough.</p>
+        <h3>Explore it in a REPL</h3>
+        <p>Start the project’s Python environment:</p>
+        <pre>uv run python</pre>
+        <p>At the <code>&gt;&gt;&gt;</code> prompt, enter these expressions one at a time:</p>
+        <pre>from pathlib import Path
+from grove.repo import open_repository
+from pygit2.enums import FileStatus
+repo = open_repository(Path.cwd())
+status = repo.status()
+status</pre>
+        <p>Inspect symbolic names and underlying integers:</p>
+        <pre>[(path, flags.name, flags.value) for path, flags in status.items()]</pre>
+        <p>Try a combined flag without modifying files:</p>
+        <pre>combined = FileStatus.INDEX_MODIFIED | FileStatus.WT_MODIFIED
+bool(combined &amp; FileStatus.WT_MODIFIED)</pre>
+        <p>Use <code>exit()</code> or Control-D to leave. Inspecting <code>Path.cwd()</code> reads Grove’s own repository and does not modify it.</p>
+        <h3>Use this Day 1 policy</h3>
+        <table>
+          <thead><tr><th>State</th><th>Dirty?</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>Tracked modification, staged change, deletion, conflict</td><td>Yes</td><td>Existing Git state would be disturbed.</td></tr>
+            <tr><td>Untracked file</td><td>Yes</td><td>Restore must not overwrite a user’s new file.</td></tr>
+            <tr><td>Ignored file</td><td>No</td><td>Keep Day 1 aligned with default Git status behavior.</td></tr>
+          </tbody>
+        </table>
+        <p><code>Repository.status()</code> already supports this with its defaults: untracked files are included and ignored files are excluded.</p>
+        <h3>Tests worth adding</h3>
+        <div class="task-grid">
+          <div class="card"><strong>Staged change</strong><p>Proves you inspect index-to-HEAD state.</p></div>
+          <div class="card"><strong>Untracked file</strong><p>Locks in Grove’s restore-safety policy.</p></div>
+          <div class="card"><strong>Deleted file</strong><p>Covers a change other than modification.</p></div>
+          <div class="card"><strong>Ignored file</strong><p>Defines the deliberate clean case.</p></div>
+        </div>
+        <h3>Focused check</h3>
+        <pre>uv run pytest tests/test_repo.py -k dirty -v</pre>
+      </section>
+
+      <section id="workflow">
+        <p class="eyebrow">Practice loop</p>
+        <h2>Implement narrowly, verify deliberately</h2>
+        <ol>
+          <li>Implement one function.</li>
+          <li>Run its focused test command.</li>
+          <li>Read XPASS as progress while the module marker is present.</li>
+          <li>After every Day 1 behavior works, remove the module-level <code>xfail</code> marker yourself.</li>
+          <li>Run the whole module, then mypy, then the complete suite.</li>
+        </ol>
+        <h3>1. Repository tests</h3>
+        <pre>uv run pytest tests/test_repo.py -v</pre>
+        <p>Success: every repository test is an ordinary <strong>PASSED</strong>.</p>
+        <h3>2. Type checker</h3>
+        <pre>uv run mypy</pre>
+        <p>Success: <code>Success: no issues found</code>.</p>
+        <h3>3. Complete suite</h3>
+        <pre>uv run pytest</pre>
+        <p>Success: Day 1 and error tests pass; later scaffold modules remain expected failures.</p>
+      </section>
+
+      <section id="checklist">
+        <p class="eyebrow">Definition of done</p>
+        <h2>Review checklist</h2>
+        <ul class="checklist">
+          <li>Public path values use <code>pathlib.Path</code>, not manual string manipulation.</li>
+          <li>Failed discovery raises <code>NotAGitRepository</code>.</li>
+          <li>A bare repository raises <code>RepositoryIsBare</code>.</li>
+          <li>No <code>assert</code> is used for runtime input validation.</li>
+          <li>No bare <code>except</code>, <code>except Exception</code>, <code># type: ignore</code>, or <code>cast()</code> was introduced.</li>
+          <li>Translated library exceptions retain their cause with <code>raise ... from err</code>.</li>
+          <li>The root comes from <code>repo.workdir</code>, not assumptions about <code>repo.path</code>.</li>
+          <li>Dirty state includes staged and untracked content but excludes ignored content.</li>
+          <li>Both mypy and the complete test suite finish without unexpected failures.</li>
+        </ul>
+      </section>
+
+      <section id="references">
+        <p class="eyebrow">Primary sources</p>
+        <h2>API reference desk</h2>
+        <div class="task-grid">
+          <div class="card"><strong>Repository discovery</strong><p><a href="https://www.pygit2.org/repository.html#pygit2.discover_repository" target="_blank" rel="noreferrer">pygit2.discover_repository ↗</a></p></div>
+          <div class="card"><strong>Repository object</strong><p><a href="https://www.pygit2.org/repository.html#pygit2.Repository" target="_blank" rel="noreferrer">pygit2.Repository ↗</a></p></div>
+          <div class="card"><strong>Working directory</strong><p><a href="https://www.pygit2.org/repository.html#pygit2.Repository.workdir" target="_blank" rel="noreferrer">Repository.workdir ↗</a></p></div>
+          <div class="card"><strong>Working-copy status</strong><p><a href="https://www.pygit2.org/index_file.html#pygit2.Repository.status" target="_blank" rel="noreferrer">Repository.status() ↗</a></p></div>
+          <div class="card"><strong>Status flags</strong><p><a href="https://www.pygit2.org/enums.html#pygit2.enums.FileStatus" target="_blank" rel="noreferrer">FileStatus enum ↗</a></p></div>
+          <div class="card"><strong>Filesystem paths</strong><p><a href="https://docs.python.org/3.12/library/pathlib.html#pathlib.Path" target="_blank" rel="noreferrer">Python pathlib.Path ↗</a></p></div>
+          <div class="card"><strong>Exception chaining</strong><p><a href="https://docs.python.org/3.12/tutorial/errors.html#exception-chaining" target="_blank" rel="noreferrer">Python tutorial ↗</a></p></div>
+          <div class="card"><strong>Git internals</strong><p><a href="https://git-scm.com/docs/gitrepository-layout" target="_blank" rel="noreferrer">Repository layout ↗</a></p></div>
+        </div>
+      </section>
+
+      <footer class="footer">Grove · Day 1 field guide · Source contract: <code>src/grove/repo.py</code></footer>
+    </main>
+  </div>
+</body>
+</html>
