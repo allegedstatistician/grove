@@ -61,6 +61,35 @@ something; XPASS means you finished something.
 `tests/test_errors.py` has no marker and passes today, because the error
 hierarchy is the one thing already defined.
 
+### Reading one module before coding
+
+The scaffold intentionally omits imports that are only needed by unfinished
+function bodies. Before implementing a function:
+
+1. Read its signature and `Raises` section.
+2. Search the repository for every project-specific name in the docstring.
+3. Check whether the name is already defined before creating anything new.
+4. Import existing names into the implementation module that uses them.
+   Imports in a test module do not make those names available to source code.
+5. Read the corresponding tests to identify observable behavior, including
+   behavior that is documented but not yet tested.
+
+For example, `repo.py` names `NotAGitRepository` and `RepositoryIsBare` in
+docstrings. Both classes already exist in `errors.py`; Day 1 requires importing
+and raising them, not defining duplicate classes.
+
+When implementing one function at a time, add `--runxfail` to a focused pytest
+command. This disables the expected-failure wrapper temporarily:
+
+- `PASSED` means the selected behavior works.
+- `FAILED` exposes the real assertion or traceback.
+- `NotImplementedError` means execution reached an unfinished body.
+
+Without `--runxfail`, unfinished tests appear as `XFAIL`, while a finished test
+appears as a strict `XPASS` and makes the command exit unsuccessfully. Remove a
+module's `xfail` marker only after every function covered by that marker is
+implemented.
+
 ## Layout
 
 ```

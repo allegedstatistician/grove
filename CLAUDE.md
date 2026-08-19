@@ -68,6 +68,12 @@ I work with Claude in two places:
    subclass of a single `GroveError`. Don't let me raise bare `Exception`
    or reach for `ValueError` as a catch-all, and use `raise ... from err`
    when wrapping a library exception.
+9. **Keep the learning instructions current.** When an implementation question
+   exposes a missing prerequisite, implicit import, unclear test convention,
+   or undocumented decision, update the relevant README or guide as part of
+   the answer. State whether named classes and helpers already exist, where
+   they live, and whether the learner must import, define, or only call them.
+   Generalize the clarification when it will apply to later modules.
 
 ## Things not to "helpfully" resolve
 
